@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Margin Calculator | Intuites Healthcare Staffing LLC</title>
+<style>
+:root{--b:#0b5394;--b2:#1c7ed6;--bl:#e8f1fb;--g:#1e8e3e;--a:#e69100;--r:#d93025;--t:#1f2933;--m:#5f6b7a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f8fc;color:var(--t)}
+header{background:linear-gradient(90deg,var(--b),var(--b2));color:#fff;padding:16px 20px}header h1{margin:0;font-size:1.3rem}header p{margin:4px 0 0;opacity:.85;font-size:.9rem}
+main{max-width:1150px;margin:auto;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){main{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:16px}.card h2{margin:0 0 12px;font-size:1.05rem;color:var(--b)}
+label{display:block;font-size:.82rem;color:var(--m);margin:10px 0 4px}input,select{width:100%;padding:9px;border:1px solid #c9d6e3;border-radius:6px;font-size:1rem}
+input:focus,select:focus{outline:2px solid var(--b2)}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{background:var(--b);color:#fff;border:0;border-radius:6px;padding:9px 14px;cursor:pointer;font-size:.9rem}button.sec{background:var(--bl);color:var(--b)}button:hover{opacity:.9}
+.qb{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{flex:1;background:var(--bl);color:var(--b)}.tabs button.on{background:var(--b);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:7px 6px;border-bottom:1px solid #e3eaf2;text-align:right}td:first-child,th:first-child{text-align:left}th{background:var(--bl);color:var(--b)}
+tr.tot td{font-weight:700;border-top:2px solid var(--b)}.neg{color:var(--r)}
+.big{font-size:2rem;font-weight:700;padding:12px;border-radius:8px;text-align:center;color:#fff;margin-bottom:10px}.green{background:var(--g)}.amber{background:var(--a)}.red{background:var(--r)}
+.steps div{font-family:ui-monospace,Menlo,monospace;font-size:.82rem;padding:5px 0;border-bottom:1px dashed #e3eaf2}.steps b{font-family:system-ui;color:var(--b)}
+.src{font-size:.8rem;color:var(--m);background:var(--bl);padding:8px;border-radius:6px;margin-top:8px;word-break:break-all}.err{color:var(--r);font-size:.85rem}
+.note{background:#fff8e1;border-left:4px solid var(--a);padding:12px;font-size:.85rem;border-radius:6px}.full{grid-column:1/-1}.hidden{display:none}small{color:var(--m)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.otbig{font-size:1.4rem;font-weight:700;padding:10px;border-radius:8px;text-align:center;color:#fff;margin:8px 0}.kpis div{background:var(--bl);border-radius:6px;padding:8px;text-align:center}.kpis span{display:block;font-size:.75rem;color:var(--m)}.kpis b{font-size:1.1rem}
+.pay{background:var(--bl);border-radius:8px;padding:10px;margin:10px 0;font-size:.95rem}
+</style></head><body>
+<header><h1>Travel Staffing Margin Calculator</h1><p>Intuites Healthcare Staffing LLC</p></header>
+<main>
+<section class="card">
+ <div class="tabs"><button id="tabF" class="on">Forward (margin)</button><button id="tabR">Reverse (max W2 / stipend)</button></div>
+ <h2>Rates</h2>
+ <div class="row"><div><label>Billing rate to Intuites ($/hr)</label><input id="bill" type="number" step="0.01" value="85"></div>
+ <div><label>Admin / VMS fee %</label><input id="fee" type="number" step="0.01" value="3"></div></div>
+ <div class="row"><div><label>Burden % (on W2 taxable wage only)</label><input id="burden" type="number" step="0.01" value="20"></div>
+ <div id="w2wrap"><label>W2 hourly rate ($/hr)</label><input id="w2" type="number" step="0.01" value="25"></div>
+ <div id="tgtwrap" class="hidden"><label>Target margin % (of bill)</label><input id="target" type="number" step="0.1" value="20"></div></div>
+ <div id="solveWrap" class="hidden"><label>Solve for</label><select id="solve"><option value="w2">Max W2 rate (hold stipend)</option><option value="st">Max hourly stipend (hold W2)</option></select></div>
+ <label>Weekly hours</label><input id="hours" type="number" step="0.5" value="36"><div class="qb"><button type="button" class="sec" data-h="36">36</button><button type="button" class="sec" data-h="40">40</button><button type="button" class="sec" data-h="48">48</button><button type="button" class="sec" id="loadEx">Load example</button></div>
+ <h2 style="margin-top:18px">Stipend (GSA per diem)</h2>
+ <div class="row"><div><label>Location: ZIP or "City, ST"</label><input id="loc" placeholder="30004 or Atlanta, GA" value="30004"></div>
+ <div><label>Assignment start month</label><input id="month" type="month"></div></div>
+ <div class="qb"><button type="button" id="lookup">Look up GSA rate</button></div>
+ <div id="matchWrap" class="hidden"><label>Multiple matches — select one</label><select id="match"></select></div>
+ <div id="lkErr" class="err"></div>
+ <div class="row"><div><label>Lodging ($/night)</label><input id="lodging" type="number" step="0.01"></div><div><label>M&amp;IE ($/day)</label><input id="mie" type="number" step="0.01"></div></div>
+ <label>Manual hourly stipend override ($/hr, blank = use GSA)</label><input id="override" type="number" step="0.01">
+ <div id="src" class="src">No GSA lookup yet.</div>
+
+ <h2 style="margin-top:18px">Overtime (OT)</h2>
+ <p style="margin:0 0 8px;font-size:.82rem;color:var(--m)">OT bill rate is linked to the main billing rate until you edit it. One OT multiplier applies to both bill (→ TV) and pay. No stipend on OT. Burden uses the same burden % as regular.</p>
+ <div class="row"><div><label>Bill rate ($/hr)</label><input id="otBill" type="number" step="0.01"></div>
+ <div><label>OT multiplier (bill &amp; pay)</label><input id="otMult" type="number" step="0.01" value="1.5"></div></div>
+ <div class="row"><div><label>VMS charges %</label><input id="otFee" type="number" step="0.01" value="6"></div>
+ <div><label>OT pay rate ($/hr)</label><input id="otPay" type="number" step="0.01"></div></div>
+ <label>OT hours / week</label><input id="otHours" type="number" step="0.5" value="0">
+
+ <details style="margin-top:10px"><summary><small>Settings: API key &amp; color thresholds</small></summary>
+  <label>api.data.gov key (free at api.data.gov/signup; DEMO_KEY is rate-limited ~10/hr)</label><input id="apikey" placeholder="DEMO_KEY">
+  <div class="row"><div><label>Green ≥ %</label><input id="tG" type="number" value="20"></div><div><label>Amber ≥ % (below = red)</label><input id="tA" type="number" value="12"></div></div>
+ </details>
+</section>
+<section class="card">
+ <h2 id="resTitle">Results</h2>
+ <div id="big" class="big">–</div>
+ <div id="payBox" class="pay"></div>
+ <div id="revBox" class="hidden"></div>
+ <div class="kpis"><div><span>Margin / week</span><b id="kW">–</b></div><div><span>Margin / month</span><b id="kM">–</b></div><div><span>13-week assignment</span><b id="k13">–</b></div></div>
+ <h2 style="margin-top:16px">Breakdown</h2>
+ <table><thead><tr><th>Item</th><th>$/hr</th><th>Weekly</th><th>% of bill</th></tr></thead><tbody id="tbl"></tbody></table>
+ <h2 style="margin-top:16px">Step-by-step</h2><div id="steps" class="steps"></div>
+
+ <h2 style="margin-top:16px">Overtime (OT) margin</h2>
+ <div id="otBig" class="otbig">–</div>
+ <div class="kpis"><div><span>OT margin / hr</span><b id="otMhr">–</b></div><div><span>OT margin / week</span><b id="otWk">–</b></div><div><span>Combined weekly (reg + OT)</span><b id="combWk">–</b></div></div>
+ <table style="margin-top:8px"><thead><tr><th>OT item</th><th>$/hr</th><th>% of OT total</th></tr></thead><tbody id="otTbl"></tbody></table>
+ <div id="otSteps" class="steps" style="margin-top:8px"></div>
+</section>
+<section class="card full note"><b>Taxable vs. non-taxable pay.</b> The W2 hourly wage is taxable, so burden (employer FICA, FUTA/SUTA, workers' comp, insurance, etc.) is applied only to the W2 wage. Travel stipends (lodging + M&amp;IE) are generally non-taxable reimbursements <i>only if</i> the clinician maintains a qualifying tax home under IRS rules (duplicated living expenses, regular work/residence ties to the tax home, assignment temporary — generally under 1 year), and they're paid under an accountable plan. Stipends exceeding GSA rates, or paid to workers without a valid tax home, may be taxable wages (and then subject to burden). Admin/VMS fee is treated as a cost line against the gross billing rate. This calculator is an estimate, not tax advice — confirm with your tax/payroll advisor.</section>
+</main>
+<script>
+// ---------- pure logic (testable in node) ----------
+function fiscalYear(y,m){return m>=10?y+1:y}
+function hourlyStipend(lodging,mie,hours){const h=hours>0?hours:0;return h?{lodgingHr:lodging*7/h,mieHr:mie*7/h,total:(lodging+mie)*7/h}:{lodgingHr:0,mieHr:0,total:0}}
+/** User formula: margin = bill − W2×(1+burden%) − stipend/hr − bill×fee% ; margin% of gross bill */
+function calc(p){
+  const feeAmt=p.bill*p.fee/100,burden=p.w2*p.burden/100,w2Loaded=p.w2*(1+p.burden/100),
+        totalPay=p.w2+p.stipHr,cost=w2Loaded+p.stipHr+feeAmt,margin=p.bill-cost,
+        pct=p.bill?margin/p.bill*100:0,wk=margin*p.hours;
+  return{feeAmt,burden,w2Loaded,totalPay,cost,margin,pct,wk,mo:wk*52/12,t13:wk*13,
+         simple:p.bill-totalPay /* bill − total pay (ignores burden & fee) */}
+}
+function maxW2(bill,fee,t,stipHr,burden){return(bill*(1-fee/100-t/100)-stipHr)/(1+burden/100)}
+function maxStipend(bill,fee,t,w2,burden){return bill*(1-fee/100-t/100)-w2*(1+burden/100)}
+/** OT: TV=bill×mult; Net=TV−TV×vms%; cost=otPay×(1+burden%); margin=Net−cost (positive=profit). No stipend. */
+function calcOt(p){
+  const tv=p.bill*p.mult,feeAmt=tv*p.vms/100,net=tv-feeAmt,
+        otPay=p.otPay,otLoaded=otPay*(1+p.burden/100),margin=net-otLoaded,
+        pct=tv?margin/tv*100:0,wk=margin*p.otHours;
+  return{tv,feeAmt,net,otPay,otLoaded,margin,pct,wk}
+}
+if(typeof module!=='undefined'){module.exports={fiscalYear,hourlyStipend,calc,maxW2,maxStipend,calcOt}}
+// ---------- UI ----------
+if(typeof document!=='undefined'){
+const $=id=>document.getElementById(id),LS='intuitesMarginCalc5',ids=['bill','fee','burden','w2','target','hours','loc','month','lodging','mie','override','apikey','tG','tA','solve','otBill','otMult','otFee','otPay','otHours'];
+let mode='F',gsa=null,rows=[];const f=n=>(n<0?'-$':'$')+Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const v=id=>parseFloat($(id).value)||0;
+function save(){const s={mode,gsa};ids.forEach(i=>s[i]=$(i).value);localStorage.setItem(LS,JSON.stringify(s))}
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));if(!s)return;ids.forEach(i=>{if(s[i]!=null)$(i).value=s[i]});gsa=s.gsa;if(s.mode)setMode(s.mode,true)}catch(e){}}
+function setMode(m,q){mode=m;$('tabF').classList.toggle('on',m==='F');$('tabR').classList.toggle('on',m==='R');$('tgtwrap').classList.toggle('hidden',m==='F');$('solveWrap').classList.toggle('hidden',m==='F');if(!q)render()}
+function render(){
+ const L=v('lodging'),M=v('mie'),hours=v('hours'),hs=hourlyStipend(L,M,hours),ov=$('override').value!=='',bill=v('bill'),fee=v('fee'),bur=v('burden');
+ let stip=ov?v('override'):hs.total,w2=v('w2'),rev='',sv=$('solve').value;
+ const rW=mode==='R'&&sv==='w2',rS=mode==='R'&&sv==='st';
+ $('w2wrap').classList.toggle('hidden',rW);
+ if(mode==='R'){const t=v('target'),coef=(1-fee/100-t/100);
+  if(rW){w2=maxW2(bill,fee,t,stip,bur);rev=`<b>Max W2 rate: ${f(w2)}/hr</b> (holding stipend ${f(stip)}/hr)<br>= (bill × (1 − fee% − target%) − stipend) ÷ (1 + burden%)<br>= (${f(bill)} × ${coef.toFixed(4)} − ${f(stip)}) ÷ ${(1+bur/100).toFixed(4)}`}
+  else{stip=maxStipend(bill,fee,t,w2,bur);rev=`<b>Max hourly stipend: ${f(stip)}/hr</b> (≈ ${f(stip*hours)}/week; holding W2 ${f(w2)}/hr)<br>= bill × (1 − fee% − target%) − W2 × (1 + burden%)<br>= ${f(bill)} × ${coef.toFixed(4)} − ${f(w2)} × ${(1+bur/100).toFixed(4)}`+(hs.total?`<br>GSA stipend/hr for comparison: ${f(hs.total)}`:'')}
+  const chk=calc({bill,fee,burden:bur,w2,hours,stipHr:stip});
+  rev=`<div class="src" style="font-size:.9rem">${rev}<br>Check: margin = ${chk.pct.toFixed(2)}% of bill (target ${t}%) ${Math.abs(chk.pct-t)<0.01?'✔':'✖'}${(rW?w2:stip)<0?'<br><span class="err">Negative — target not achievable with the held value.</span>':''}</div>`}
+ $('revBox').innerHTML=rev;$('revBox').classList.toggle('hidden',mode!=='R');
+ const r=calc({bill,fee,burden:bur,w2,hours,stipHr:stip}),G=v('tG'),A=v('tA');
+ $('big').textContent=`Margin ${r.pct.toFixed(2)}% of bill  ·  ${f(r.margin)}/hr`;$('big').className='big '+(r.pct>=G?'green':r.pct>=A?'amber':'red');
+ $('payBox').innerHTML=`<b>Total pay rate:</b> ${f(w2)} W2 + ${f(stip)} stipend = <b>${f(r.totalPay)}/hr</b>`+(Math.abs(r.simple-(bill-r.totalPay))<1e-9?` &nbsp;·&nbsp; <small>Bill − total pay (no burden/fee) = ${f(r.simple)}/hr</small>`:``);
+ $('kW').textContent=f(r.wk);$('kM').textContent=f(r.mo);$('k13').textContent=f(r.t13);
+ const pb=x=>bill?(x/bill*100).toFixed(2)+'%':'–',row=(n,x,c='')=>`<tr class="${c}"><td>${n}</td><td class="${x<0?'neg':''}">${f(x)}</td><td>${f(x*hours)}</td><td>${pb(x)}</td></tr>`;
+ const stLabel=rS?' (max)':ov?' (manual override)':'';
+ $('tbl').innerHTML=
+  row('Billing rate to Intuites',bill)+
+  row('− W2 rate'+(rW?' (max)':''),-w2)+
+  row('− Burden ('+bur+'% of W2)',-r.burden)+
+  ((ov||rS)?'':row('&nbsp;&nbsp;· lodging/hr',-hs.lodgingHr)+row('&nbsp;&nbsp;· M&amp;IE/hr',-hs.mieHr))+
+  row('− Stipend/hr'+stLabel,-stip)+
+  row('− Admin / VMS fee ('+fee+'%)',-r.feeAmt)+
+  row('= Gross margin',r.margin,'tot');
+ $('steps').innerHTML=[
+ ['Lodging/hr',`${f(L)} × 7 ÷ ${hours} h = ${f(hs.lodgingHr)}`],
+ ['M&IE/hr',`${f(M)} × 7 ÷ ${hours} h = ${f(hs.mieHr)}`],
+ ['Stipend/hr',ov&&!rS?`manual override = ${f(stip)} (GSA would be ${f(hs.total)})`:rS?`solved max = ${f(stip)}`:`(${f(L)} + ${f(M)}) × 7 ÷ ${hours} = ${f(stip)}`],
+ ['Total pay rate',`${f(w2)} + ${f(stip)} = ${f(r.totalPay)}`],
+ ['Burden/hr',`${f(w2)} × ${bur}% = ${f(r.burden)} (W2 only)`],
+ ['W2 × (1+burden%)',`${f(w2)} × ${(1+bur/100).toFixed(2)} = ${f(r.w2Loaded)}`],
+ ['Admin fee $',`${f(bill)} × ${fee}% = ${f(r.feeAmt)}`],
+ ['Total cost/hr',`${f(r.w2Loaded)} + ${f(stip)} + ${f(r.feeAmt)} = ${f(r.cost)}`],
+ ['Margin $/hr',`${f(bill)} − ${f(r.w2Loaded)} − ${f(stip)} − ${f(r.feeAmt)} = ${f(r.margin)}`],
+ ['Margin % of bill',`${f(r.margin)} ÷ ${f(bill)} = ${r.pct.toFixed(2)}%`],
+ ['Bill − total pay (no burden/fee)',`${f(bill)} − ${f(r.totalPay)} = ${f(r.simple)}`],
+ ['Weekly',`${f(r.margin)} × ${hours} h = ${f(r.wk)}`],
+ ['Monthly',`${f(r.wk)} × 52 ÷ 12 = ${f(r.mo)}`],
+ ['13-week',`${f(r.wk)} × 13 = ${f(r.t13)}`]
+ ].map(([a,b])=>`<div><b>${a}:</b> ${b}</div>`).join('');
+ // ---- OT ----
+ const otBill=v('otBill'),otMult=v('otMult'),otPay=v('otPay'),otHrs=v('otHours'),
+       ot=calcOt({bill:otBill,mult:otMult,vms:v('otFee'),otPay,burden:bur,otHours:otHrs});
+ $('otBig').textContent=`OT margin ${ot.pct.toFixed(2)}% of TV  ·  ${f(ot.margin)}/hr`;
+ $('otBig').className='otbig '+(ot.pct>=G?'green':ot.pct>=A?'amber':'red');
+ $('otMhr').textContent=f(ot.margin);$('otWk').textContent=f(ot.wk);$('combWk').textContent=f(r.wk+ot.wk);
+ const opb=x=>ot.tv?(x/ot.tv*100).toFixed(2)+'%':'–',
+       orow=(n,x,c='')=>`<tr class="${c}"><td>${n}</td><td class="${x<0?'neg':''}">${f(x)}</td><td>${opb(x)}</td></tr>`;
+ $('otTbl').innerHTML=
+  orow('TV (Bill rate × '+otMult+')',ot.tv)+
+  orow('− VMS charges ('+v('otFee')+'%)',-ot.feeAmt)+
+  orow('= Net bill rate',ot.net,'tot')+
+  orow('− OT pay rate × 1.2 (burden)',-ot.otLoaded)+
+  orow('= Margin',ot.margin,'tot');
+ $('otSteps').innerHTML=[
+ ['Bill rate',`${f(otBill)}`],
+ ['OT multiplier',`${otMult}`],
+ ['TV',`${f(otBill)} × ${otMult} = ${f(ot.tv)}`],
+ ['VMS charges %',`${v('otFee')}% → ${f(ot.feeAmt)}`],
+ ['Net bill rate',`TV − TV × ${v('otFee')}% = ${f(ot.tv)} − ${f(ot.feeAmt)} = ${f(ot.net)}`],
+ ['OT pay rate',`${f(otPay)}`],
+ ['OT pay rate × 1.2',`${f(otPay)} × ${(1+bur/100).toFixed(2)} = ${f(ot.otLoaded)}`],
+ ['Margin',`Net bill rate − OT pay rate × 1.2 = ${f(ot.net)} − ${f(ot.otLoaded)} = ${f(ot.margin)} (positive = profit)`],
+ ['OT margin % of TV',`${f(ot.margin)} ÷ ${f(ot.tv)} = ${ot.pct.toFixed(2)}%`],
+ ['OT hours / week',`${otHrs}`],
+ ['Weekly OT margin',`${f(ot.margin)} × ${otHrs} h = ${f(ot.wk)}`],
+ ['Combined weekly (reg + OT)',`${f(r.wk)} + ${f(ot.wk)} = ${f(r.wk+ot.wk)}`]
+ ].map(([a,b])=>`<div><b>${a}:</b> ${b}</div>`).join('');
+ renderSrc();save()}
+function renderSrc(){if(!gsa){$('src').textContent='No GSA lookup yet. Enter rates manually or look up.';return}
+ $('src').innerHTML=`Source: U.S. GSA Per Diem API — <a href="${gsa.url.replace(/api_key=[^&]*/,'api_key=…')}" target="_blank">${gsa.url.replace(/api_key=[^&]*/,'api_key=…')}</a><br>FY${gsa.fy} · Month: ${gsa.month} · Matched: ${gsa.place}<br>Pulled: ${gsa.at}<br><small>Cross-check: gsa.gov/travel/plan-book/per-diem-rates</small>`}
+function applyRow(i){const x=rows[i],[y,m]=$('month').value.split('-').map(Number),mo=x.months.month.find(o=>o.number===m)||x.months.month[0];
+ $('lodging').value=mo.value;$('mie').value=x.meals;gsa={url:gsa.url,fy:gsa.fy,month:mo.long+' '+y,place:`${x.city}${x.county?' ('+x.county+' County)':''}${x.zip?' ZIP '+x.zip:''}${x.standardRate==='true'?' — standard CONUS rate':''}`,at:new Date().toLocaleString()};render()}
+async function lookup(){$('lkErr').textContent='';const loc=$('loc').value.trim(),mv=$('month').value;if(!mv){$('lkErr').textContent='Pick a start month.';return}
+ const[y,m]=mv.split('-').map(Number),fy=fiscalYear(y,m),key=$('apikey').value.trim()||'DEMO_KEY',base='https://api.gsa.gov/travel/perdiem/v2/rates/';let url;
+ if(/^\d{5}$/.test(loc))url=`${base}zip/${loc}/year/${fy}`;else{const p=loc.split(',').map(s=>s.trim());if(p.length<2||!/^[A-Za-z]{2}$/.test(p[1])){$('lkErr').textContent='Use a 5-digit ZIP or "City, ST".';return}url=`${base}city/${encodeURIComponent(p[0])}/state/${p[1].toUpperCase()}/year/${fy}`}
+ url+='?api_key='+encodeURIComponent(key);$('lookup').textContent='Looking up…';
+ try{const res=await fetch(url);if(res.status===429)throw Error('Rate limit hit (DEMO_KEY allows ~10 requests/hour). Paste your own free api.data.gov key in Settings.');if(!res.ok)throw Error('GSA API returned HTTP '+res.status);
+  const d=await res.json();rows=(d.rates||[]).flatMap(r=>r.rate||[]);if(!rows.length)throw Error('No rates found for FY'+fy+'. Check location or enter manually / override.');
+  gsa={url,fy};const sel=$('match');sel.innerHTML=rows.map((x,i)=>`<option value="${i}">${x.city}${x.county?' — '+x.county:''} · lodging ${[...new Set(x.months.month.map(o=>o.value))].join('/')} · M&IE ${x.meals}${x.standardRate==='true'?' (standard)':''}</option>`).join('');
+  $('matchWrap').classList.toggle('hidden',rows.length<2);applyRow(0)}catch(e){$('lkErr').textContent='Lookup failed: '+e.message+' Use manual rates or the stipend override.'}finally{$('lookup').textContent='Look up GSA rate'}}
+function loadExample(){setMode('F',true);$('bill').value='58';$('fee').value='5';$('burden').value='20';$('w2').value='15.13';$('hours').value='36';$('override').value='29.87';$('lodging').value='';$('mie').value='';$('otBill').value='58';$('otMult').value='1.5';$('otFee').value='6';$('otPay').value=(15.13*1.5).toFixed(4);$('otHours').value='0';otBillLinked=true;otPayLinked=true;gsa=null;render()}
+let otBillLinked=true,otPayLinked=true;
+function syncOtFromMain(){if(otBillLinked)$('otBill').value=$('bill').value;if(otPayLinked){const m=v('otMult')||1.5;$('otPay').value=((v('w2')||0)*m).toFixed(4)}}
+$('match').onchange=e=>applyRow(+e.target.value);$('lookup').onclick=lookup;$('tabF').onclick=()=>setMode('F');$('tabR').onclick=()=>setMode('R');$('solve').onchange=render;$('loadEx').onclick=loadExample;
+document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{$('hours').value=b.dataset.h;render()});
+$('otBill').addEventListener('input',()=>{otBillLinked=false;render()});
+$('otPay').addEventListener('input',()=>{otPayLinked=false;render()});
+$('otMult').addEventListener('input',()=>{if(otPayLinked){const m=v('otMult')||1.5;$('otPay').value=((v('w2')||0)*m).toFixed(4)}render()});
+$('bill').addEventListener('input',()=>{if(otBillLinked)$('otBill').value=$('bill').value;render()});
+$('w2').addEventListener('input',()=>{if(otPayLinked){const m=v('otMult')||1.5;$('otPay').value=((v('w2')||0)*m).toFixed(4)}render()});
+document.querySelectorAll('input').forEach(i=>{if(!['otBill','otPay','otMult','bill','w2'].includes(i.id))i.addEventListener('input',render)});
+const d=new Date();$('month').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');load();
+if(!$('otBill').value)$('otBill').value=$('bill').value;
+if(!$('otPay').value){const m=v('otMult')||1.5;$('otPay').value=((v('w2')||0)*m).toFixed(4)}
+if($('otBill').value===$('bill').value)otBillLinked=true;
+const defPay=((v('w2')||0)*(v('otMult')||1.5));if(Math.abs((v('otPay')||0)-defPay)<0.0002)otPayLinked=true;
+render()}
+</script></body></html>
